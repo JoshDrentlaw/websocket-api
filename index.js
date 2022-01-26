@@ -3,10 +3,16 @@ import { initWebSocket, parseMessage } from './websocket-client.js'
 const sendBtn = document.querySelector('#send'),
     messages = document.querySelector('#messages'),
     messageBox = document.querySelector('#messageBox'),
-    themeSelect = document.querySelector('#theme-select')
+    userList = document.querySelector('#user-list')
 
 let chatSocket = initWebSocket({ path: 'chat' }),
-    themeSocket = initWebSocket({ path: 'theme' })
+    userSocket = initWebSocket({
+        path: `user?username=${window.localStorage.getItem('username')}&room=1`,
+        onOpen: () => {
+            console.log(userSocket)
+            addUser
+        }
+    })
 
 function showMessage(message) {
     console.log({message})
@@ -15,9 +21,14 @@ function showMessage(message) {
     messageBox.value = ''
 }
 
-function updateTheme(color) {
-    console.log({color})
-    sendBtn.style.backgroundColor = color
+function addUser(users) {
+    console.log({users})
+    userList.innerHTML = null
+    users.forEach(u => {
+        const li = document.createElement('li')
+        li.innerHTML = u
+        userList.appendChild(li)
+    })
 }
 
 sendBtn.onclick = function () {
@@ -30,21 +41,10 @@ sendBtn.onclick = function () {
     showMessage(messageBox.value)
 }
 
-themeSelect.onchange = ({ target: { value }}) => {
-    if (!themeSocket) {
-        showMessage("No Theme connection :(")
-        return
-    }
-
-    themeSocket.send(value)
-    updateTheme(value)
-}
-
 const init = () => {
-    // chatSocket.onmessage = async ({ data }) => showMessage(await parseMessage(data))
     chatSocket.setMessage(showMessage)
-    // themeSocket.onmessage = ({ data }) => updateTheme(data)
-    themeSocket.setMessage(updateTheme)
+    userSocket.setJsonMessage(addUser)
+    addUser(window.localStorage.getItem('username'))
 }
 
 init()

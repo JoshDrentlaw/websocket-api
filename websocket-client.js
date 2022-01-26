@@ -1,4 +1,4 @@
-export const initWebSocket = ({ path } = { path: '' }) => {
+export const initWebSocket = ({ path = '', onOpen = () => {} }) => {
     let ws
     console.log('initing web socket path:', path)
     if (ws) {
@@ -11,6 +11,7 @@ export const initWebSocket = ({ path } = { path: '' }) => {
 
     ws.onopen = () => {
         console.log(`Connected to "${path}" socket`)
+        onOpen()
     }
 
     ws.onclose = function () {
@@ -19,6 +20,12 @@ export const initWebSocket = ({ path } = { path: '' }) => {
 
     ws.setMessage = fn => {
         ws.onmessage = async ({ data }) => fn(await parseMessage(data))
+    }
+
+    ws.setJsonMessage = fn => {
+        ws.onmessage = async ({ data }) => {
+            fn(JSON.parse(await parseMessage(data)).users)
+        }
     }
 
     return ws
